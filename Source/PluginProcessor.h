@@ -4,6 +4,7 @@
 #include <array>
 #include <atomic>
 #include <cstdint>
+#include <complex>
 #include <vector>
 
 class AntihumanScaleAudioProcessor : public juce::AudioProcessor
@@ -53,6 +54,10 @@ private:
     std::array<std::vector<float>, 2> outputRing;
     std::array<std::vector<float>, 2> fftWork;
     std::array<std::vector<float>, 2> fftProcessed;
+    // JUCE 9 FFT::perform uses std::complex<float> buffers. Reused scratch
+    // arrays avoid allocations on the audio thread.
+    std::array<std::complex<float>, fftSize> fftInput {};
+    std::array<std::complex<float>, fftSize> fftOutput {};
     std::array<std::vector<float>, 2> binWeights;
     std::array<std::vector<float>, 2> dryMagnitudes;
     std::vector<float> window;
