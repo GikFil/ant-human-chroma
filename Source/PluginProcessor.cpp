@@ -422,7 +422,7 @@ void AntihumanScaleAudioProcessor::processSpectralFrame(int rootNote, int scaleI
             const auto outputAbsolute = firstOutputSample + static_cast<std::uint64_t>(i);
             const auto outputIndex = static_cast<size_t>(outputAbsolute % static_cast<std::uint64_t>(ringSize));
             const auto sample = processed[static_cast<size_t>(2 * i)]
-                / static_cast<float>(fftSize) * window[static_cast<size_t>(i)] * (2.0f / 3.0f);
+                * window[static_cast<size_t>(i)] * (2.0f / 3.0f);
             output[outputIndex] += sample;
         }
 
