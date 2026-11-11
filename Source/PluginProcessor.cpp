@@ -263,7 +263,22 @@ void AntihumanScaleAudioProcessor::processSpectralFrame(int rootNote, int scaleI
             work[static_cast<size_t>(2 * i)] = input[sourceIndex] * window[static_cast<size_t>(i)];
         }
 
-        fft.perform(work.data(), work.data(), false);
+        // JUCE 9 expects std::complex<float> buffers, not interleaved float*.
+        // Convert the interleaved work buffer to complex samples, run the FFT,
+        // then copy the spectrum back into the existing interleaved layout.
+        for (int i = 0; i < fftSize; ++i)
+            fftInput[static_cast<size_t>(i)] = {
+                work[static_cast<size_t>(2 * i)],
+                work[static_cast<size_t>(2 * i + 1)]
+            };
+
+        fft.perform(fftInput.data(), fftOutput.data(), false);
+
+        for (int i = 0; i < fftSize; ++i)
+        {
+            work[static_cast<size_t>(2 * i)] = fftOutput[static_cast<size_t>(i)].real();
+            work[static_cast<size_t>(2 * i + 1)] = fftOutput[static_cast<size_t>(i)].imag();
+        }
 
         float framePeak = 0.0f;
         for (int bin = 0; bin < positiveBins; ++bin)
@@ -387,7 +402,20 @@ void AntihumanScaleAudioProcessor::processSpectralFrame(int rootNote, int scaleI
             processed[static_cast<size_t>(2 * mirrorBin + 1)] = -im;
         }
 
-        fft.perform(processed.data(), processed.data(), true);
+        // Convert the processed interleaved spectrum to JUCE 9 complex buffers.
+        for (int i = 0; i < fftSize; ++i)
+            fftInput[static_cast<size_t>(i)] = {
+                processed[static_cast<size_t>(2 * i)],
+                processed[static_cast<size_t>(2 * i + 1)]
+            };
+
+        fft.perform(fftInput.data(), fftOutput.data(), true);
+
+        for (int i = 0; i < fftSize; ++i)
+        {
+            processed[static_cast<size_t>(2 * i)] = fftOutput[static_cast<size_t>(i)].real();
+            processed[static_cast<size_t>(2 * i + 1)] = fftOutput[static_cast<size_t>(i)].imag();
+        }
 
         for (int i = 0; i < fftSize; ++i)
         {
